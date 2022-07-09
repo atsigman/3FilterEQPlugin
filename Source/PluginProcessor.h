@@ -26,6 +26,7 @@ struct ChainSettings
     int lowCutSlope{ Slope::Slope_12 }, highCutSlope { Slope::Slope_12 };
 };
 
+
 // helper function for extracting filter parameter values (returns data struct):
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
@@ -100,6 +101,10 @@ private:
         Peak,
         HighCut
     };
+    
+    void updatePeakFilter(const ChainSettings &chainSettings);
+    using Coefficients = Filter::CoefficientsPtr;
+    static void updateCoefficients(Coefficients& old, Coefficients& replacements); 
     
 
     //==============================================================================
