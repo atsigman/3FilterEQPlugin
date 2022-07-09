@@ -10,12 +10,20 @@
 
 #include <JuceHeader.h>
 
+enum Slope
+{
+    Slope_12,
+    Slope_24,
+    Slope_36,
+    Slope_48
+};
+
 // extracted filter parameters:
 struct ChainSettings
 {
     float peakFreq{ 0 }, peakGainInDecibels { 0 }, peakQuality {1.f};
     float lowCutFreq { 0 }, highCutFreq { 0 };
-    int lowCutSlope{ 0 }, highCutSlope { 0 };
+    int lowCutSlope{ Slope::Slope_12 }, highCutSlope { Slope::Slope_12 };
 };
 
 // helper function for extracting filter parameter values (returns data struct):
