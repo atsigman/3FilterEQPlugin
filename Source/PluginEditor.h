@@ -49,6 +49,19 @@ private:
     lowCutSlopeSlider,
     highCutSlopeSlider;
     
+    using APVTS = juce::AudioProcessorValueTreeState;
+    using Attachment = APVTS::SliderAttachment;
+    
+    // Attach sliders to parameters: 
+    Attachment peakFreqSliderAttachment,
+               peakGainSliderAttachment,
+               peakQualitySliderAttachment,
+               lowCutFreqSliderAttachment,
+               highCutFreqSliderAttachment,
+               lowCutSlopeSliderAttachment,
+               highCutSlopeSliderAttachment;
+                
+    
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
     std::vector<juce::Component*> getComps();
     
