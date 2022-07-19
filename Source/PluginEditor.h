@@ -65,6 +65,9 @@ private:
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
     std::vector<juce::Component*> getComps();
     
+   // instance of MonoChain constructor, declared in PluginProcessor.h: 
+    MonoChain monoChain;
+    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
 };

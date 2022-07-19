@@ -30,6 +30,23 @@ struct ChainSettings
 // helper function for extracting filter parameter values (returns data struct):
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
+// Aliases:
+using Filter = juce::dsp::IIR::Filter<float>;
+
+//chain of filters (for LP or HP, 12dB/octave):
+
+using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+
+// Mono channel chain:
+using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+
+enum ChainPositions
+{
+    LowCut,
+    Peak,
+    HighCut
+};
+
 //==============================================================================
 /**
 */
@@ -42,6 +59,8 @@ public:
     //==============================================================================
     SimpleEQAudioProcessor();
     ~SimpleEQAudioProcessor() override;
+    
+    
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -83,24 +102,7 @@ public:
         createParameterLayout()};
 
 private:
-    //aliases:
-    using Filter = juce::dsp::IIR::Filter<float>;
-    
-    //chain of filters (for LP or HP, 12dB/octave):
-    
-    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-    
-    // mono channel chain:
-    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
-    
     MonoChain leftChain, rightChain;
-    
-    enum ChainPositions
-    {
-        LowCut,
-        Peak,
-        HighCut
-    };
     
     void updatePeakFilter(const ChainSettings &chainSettings);
     using Coefficients = Filter::CoefficientsPtr;
