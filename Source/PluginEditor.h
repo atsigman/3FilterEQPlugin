@@ -25,11 +25,22 @@ struct CustomRotarySlider : juce::Slider
 //==============================================================================
 /**
 */
-class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor
+class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor,
+juce::AudioProcessorParameter::Listener,
+juce::Timer
 {
 public:
     SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor&);
     ~SimpleEQAudioProcessorEditor() override;
+    
+    // Listener callback functions:
+    void parameterValueChanged (int parameterIndex, float newValue) override;
+    
+    // Not relevant: empty implementation
+    void parameterGestureChanged (int parameterIndex, bool gestureIsStarting) override {};
+    
+    void timerCallback() override;
+
 
     //==============================================================================
     void paint (juce::Graphics&) override;
@@ -39,6 +50,9 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
+    
+    // Atomic flag for updating response curve GUI: 
+    juce::Atomic<bool> parametersChanged { false };
     
     // The rotary sliders:
     CustomRotarySlider peakFreqSlider,
@@ -65,7 +79,7 @@ private:
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
     std::vector<juce::Component*> getComps();
     
-   // instance of MonoChain constructor, declared in PluginProcessor.h: 
+   // instance of MonoChain constructor, declared in PluginProcessor.h:
     MonoChain monoChain;
     
 
