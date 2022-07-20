@@ -32,6 +32,18 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
         addAndMakeVisible(comp);
     }
     
+    const auto& params = audioProcessor.getParameters();
+
+    // Add listener for each param:
+    for (auto param : params)
+    {
+        
+        param->addListener(this);
+    }
+    
+    // Start timer:
+    startTimerHz(60);
+    
     // Embiggen the editor window:
     setSize(600, 400);
 }
@@ -40,6 +52,13 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 {
+    const auto& params = audioProcessor.getParameters();
+    
+    for (auto param : params)
+    {
+        
+        param-> removeListener(this);
+    }
 }
 
 //==============================================================================
@@ -139,7 +158,7 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
     // Iterate over all magnitudes and map:
     for (size_t i = 1; i < mags.size(); ++i)
     {
-        responseCurve.startNewSubPath(responseArea.getX() + i , map(mags[i]));
+        responseCurve.lineTo(responseArea.getX() + i , map(mags[i]));
     }
     
     g.setColour(Colours::orange);
@@ -196,12 +215,17 @@ void SimpleEQAudioProcessorEditor::parameterValueChanged(int parameterIndex, flo
 void SimpleEQAudioProcessorEditor::timerCallback()
 {
     if(parametersChanged.compareAndSetBool(false, true))
+        
     {
         // Update the Monochain
-        // Signal a repaint (draw new response curve)
-        
-        
+        auto chainSettings = getChainSettings(audioProcessor.apvts);
+        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     }
+    
+        // Signal a repaint (draw new response curve)
+        repaint();
+    
 }
 
 
