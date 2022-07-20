@@ -50,7 +50,68 @@ enum ChainPositions
 using Coefficients = Filter::CoefficientsPtr;
 void updateCoefficients(Coefficients& old, const Coefficients& replacements);
 
-Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate); 
+Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
+
+// Helper function:
+template<int Index, typename ChainType, typename CoefficientType>
+void update(ChainType& chain, const CoefficientType& coefficients)
+{
+    updateCoefficients(chain.template get<Index>().coefficients, coefficients[Index]);
+    chain.template setBypassed<Index>(false);
+}
+
+// Template function, given unknown param types:
+template<typename ChainType, typename CoefficientType>
+void updateCutFilter(ChainType& leftLowCut,
+                     const CoefficientType& CutCoefficients,
+                     const Slope lowCutSlope)
+{
+    leftLowCut.template setBypassed<0>(true);
+    leftLowCut.template setBypassed<1>(true);
+    leftLowCut.template setBypassed<2>(true);
+    leftLowCut.template setBypassed<3>(true);
+    
+    switch ( lowCutSlope )
+    {
+        // rather than break after each case, passes to next case:
+        case Slope_48:
+        {
+            update<3>(leftLowCut, CutCoefficients);
+        }
+            
+        case Slope_36:
+        {
+            update<2>(leftLowCut, CutCoefficients);
+        }
+            
+        case Slope_24:
+        {
+            update<1>(leftLowCut, CutCoefficients);
+        }
+            
+            
+        case Slope_12:
+        {
+            update<0>(leftLowCut, CutCoefficients);
+        }
+            
+    };
+}
+
+// Use inline keyword to avoid the compiler producing a definition in each module in which this
+// .h file is included, thus confusing the linker, use inline keyword:
+
+inline auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate)
+{
+    return juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, sampleRate, (chainSettings.lowCutSlope + 1) * 2);
+    
+}
+
+inline auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate)
+{
+    return juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, (chainSettings.highCutSlope + 1) * 2);
+    
+}
 
 //==============================================================================
 /**
@@ -110,54 +171,7 @@ private:
     MonoChain leftChain, rightChain;
     
     void updatePeakFilter(const ChainSettings &chainSettings);
-    
-    // helper function:
-    template<int Index, typename ChainType, typename CoefficientType>
-    void update(ChainType& chain, const CoefficientType& coefficients)
-    {
-        updateCoefficients(chain.template get<Index>().coefficients, coefficients[Index]);
-        chain.template setBypassed<Index>(false);
-    }
-    
-    // template function, given unkmnown param types:
-    template<typename ChainType, typename CoefficientType>
-    void updateCutFilter(ChainType& leftLowCut,
-                         const CoefficientType& CutCoefficients,
-                         const Slope lowCutSlope)
-    {
-        leftLowCut.template setBypassed<0>(true);
-        leftLowCut.template setBypassed<1>(true);
-        leftLowCut.template setBypassed<2>(true);
-        leftLowCut.template setBypassed<3>(true);
         
-        switch ( lowCutSlope )
-        {
-            // rather than break after each case, passes to next case:
-            case Slope_48:
-            {
-                update<3>(leftLowCut, CutCoefficients);
-            }
-                
-            case Slope_36:
-            {
-                update<2>(leftLowCut, CutCoefficients);
-            }
-                
-            case Slope_24:
-            {
-                update<1>(leftLowCut, CutCoefficients);
-            }
-                
-                
-            case Slope_12:
-            {
-                update<0>(leftLowCut, CutCoefficients);
-            }
-                
-        };
-
-    }
-    
     void updateLowCutFilters(const ChainSettings& chainSettings);
     void updateHighCutFilters(const ChainSettings& chainSettings);
 
