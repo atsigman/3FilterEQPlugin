@@ -22,16 +22,13 @@ struct CustomRotarySlider : juce::Slider
 
 };
 
-//==============================================================================
-/**
-*/
-class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor,
+// Response curve as separate component (to avoid exceeding editor boundaries):
+struct ResponseCurveComponent: juce::Component,
 juce::AudioProcessorParameter::Listener,
 juce::Timer
 {
-public:
-    SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor&);
-    ~SimpleEQAudioProcessorEditor() override;
+    ResponseCurveComponent(SimpleEQAudioProcessor&);
+    ~ResponseCurveComponent();
     
     // Listener callback functions:
     void parameterValueChanged (int parameterIndex, float newValue) override;
@@ -40,7 +37,26 @@ public:
     void parameterGestureChanged (int parameterIndex, bool gestureIsStarting) override {};
     
     void timerCallback() override;
+    
+    void paint(juce::Graphics&) override;
+    
+    SimpleEQAudioProcessor& audioProcessor;
+    
+    // Atomic flag for updating response curve GUI:
+    juce::Atomic<bool> parametersChanged { false };
+    
+    MonoChain monoChain; 
+};
 
+//==============================================================================
+/**
+*/
+class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor
+{
+public:
+    SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor&);
+    ~SimpleEQAudioProcessorEditor() override;
+    
 
     //==============================================================================
     void paint (juce::Graphics&) override;
@@ -50,9 +66,6 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
-    
-    // Atomic flag for updating response curve GUI: 
-    juce::Atomic<bool> parametersChanged { false };
     
     // The rotary sliders:
     CustomRotarySlider peakFreqSlider,
@@ -66,6 +79,10 @@ private:
     using APVTS = juce::AudioProcessorValueTreeState;
     using Attachment = APVTS::SliderAttachment;
     
+    // declare instance of ResponseCurveComponent:
+    ResponseCurveComponent responseCurveComponent;
+    
+    
     // Attach sliders to parameters: 
     Attachment peakFreqSliderAttachment,
                peakGainSliderAttachment,
@@ -75,13 +92,10 @@ private:
                lowCutSlopeSliderAttachment,
                highCutSlopeSliderAttachment;
                 
-    
+   
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
     std::vector<juce::Component*> getComps();
     
-   // instance of MonoChain constructor, declared in PluginProcessor.h:
-    MonoChain monoChain;
     
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
 };
