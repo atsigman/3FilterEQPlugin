@@ -178,6 +178,14 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
 SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
 // Initialise response curve and slider parameter attachments:
+peakFreqSlider(*audioProcessor.apvts.getParameter("Peak Freq"), "Hz"),
+peakGainSlider(*audioProcessor.apvts.getParameter("Peak Gain"), "dB"),
+peakQualitySlider(*audioProcessor.apvts.getParameter("Peak Quality"), ""),
+lowCutFreqSlider(*audioProcessor.apvts.getParameter("LowCut Freq"), "Hz"),
+highCutFreqSlider(*audioProcessor.apvts.getParameter("HighCut Freq"), "Hz"),
+lowCutSlopeSlider(*audioProcessor.apvts.getParameter("LowCut Slope"), "dB/Oct"),
+highCutSlopeSlider(*audioProcessor.apvts.getParameter("HighCut Slope"), "dB/Oct"),
+
 responseCurveComponent(audioProcessor),
 peakFreqSliderAttachment(audioProcessor.apvts, "Peak Freq", peakFreqSlider),
 peakGainSliderAttachment(audioProcessor.apvts, "Peak Gain", peakGainSlider),
@@ -233,7 +241,7 @@ void SimpleEQAudioProcessorEditor::resized()
     
     auto bounds = getLocalBounds();
     // Response area = 1/3 down from top (the rectangle in which the response curve will be situated):
-    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33); 
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
     
     responseCurveComponent.setBounds(responseArea); 
     
