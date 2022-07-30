@@ -222,9 +222,11 @@ ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p): audio
         param->addListener(this);
     }
     
+    // Update MonoChain (at launch/reopening of plugin GUI):
+    updateChain();
+    
     // Start timer:
     startTimerHz(60);
-    
 }
 
 ResponseCurveComponent::~ResponseCurveComponent() {
@@ -247,23 +249,30 @@ void ResponseCurveComponent::timerCallback()
     if(parametersChanged.compareAndSetBool(false, true))
         
     {
-        // Update the Monochain
-        
-        double sampleRate = audioProcessor.getSampleRate();
-        
-        auto chainSettings = getChainSettings(audioProcessor.apvts);
-        auto peakCoefficients = makePeakFilter(chainSettings, sampleRate);
-        updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
-        
-        auto lowCutCoefficients = makeLowCutFilter(chainSettings, sampleRate);
-        auto highCutCoefficients = makeHighCutFilter(chainSettings, sampleRate);
-        
-        updateCutFilter(monoChain.get<LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
-        updateCutFilter(monoChain.get<HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
+        updateChain();
         
         // Signal a repaint (draw new response curve)
         repaint();
     }
+}
+
+// To ensure that current parameters are displayed in response curve at plugin launch:
+void ResponseCurveComponent::updateChain()
+{
+    // Update the Monochain
+    
+    double sampleRate = audioProcessor.getSampleRate();
+    
+    auto chainSettings = getChainSettings(audioProcessor.apvts);
+    auto peakCoefficients = makePeakFilter(chainSettings, sampleRate);
+    updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+    
+    auto lowCutCoefficients = makeLowCutFilter(chainSettings, sampleRate);
+    auto highCutCoefficients = makeHighCutFilter(chainSettings, sampleRate);
+    
+    updateCutFilter(monoChain.get<LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
+    updateCutFilter(monoChain.get<HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
+    
 }
     
 void ResponseCurveComponent::paint (juce::Graphics& g)
@@ -399,7 +408,29 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-//    setSize (400, 300);
+//    setSize (600, 480);
+    
+// Initialise param min/max labels:
+    peakFreqSlider.labels.add({0.f, "20Hz"});
+    peakFreqSlider.labels.add({1.f, "20KHz"});
+    
+    peakGainSlider.labels.add({0.f, "-24dB"});
+    peakGainSlider.labels.add({1.f, "+24dB"});
+    
+    peakQualitySlider.labels.add({0.f, "0.1"});
+    peakQualitySlider.labels.add({1.f, "10"});
+
+    lowCutFreqSlider.labels.add({0.f, "20Hz"});
+    lowCutFreqSlider.labels.add({1.f, "20KHz"});
+    
+    lowCutSlopeSlider.labels.add({0.f, "12dB/Oct"});
+    lowCutSlopeSlider.labels.add({1.f, "48dB/Oct"});
+    
+    highCutFreqSlider.labels.add({0.f, "20Hz"});
+    highCutFreqSlider.labels.add({1.f, "20KHz"});
+    
+    highCutSlopeSlider.labels.add({0.f, "12dB/Oct"});
+    highCutSlopeSlider.labels.add({1.f, "48dB/Oct"});
     
     // Add and make visible each slider:
     for ( auto* comp: getComps() )
@@ -442,10 +473,16 @@ void SimpleEQAudioProcessorEditor::resized()
     // Set relative positions for each slider (bounds is stateful, and thus updates after each assignment):
     
     auto bounds = getLocalBounds();
-    // Response area = 1/3 down from top (the rectangle in which the response curve will be situated):
-    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
     
-    responseCurveComponent.setBounds(responseArea); 
+    
+    // Response area = Some height ratio down from top (the rectangle in which the response curve will be situated):
+    float hRatio = 25.f / 100.f;
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * hRatio);
+    
+    responseCurveComponent.setBounds(responseArea);
+    
+    // offset current bounds a few pixels below bottom boundary of responseArea:
+    bounds.removeFromTop(5);
     
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 0.33);
     

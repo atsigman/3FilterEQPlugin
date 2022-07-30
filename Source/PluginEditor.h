@@ -55,6 +55,7 @@ struct RotarySliderWithLabels : juce::Slider
         juce::String label;
     };
     
+    // 2 labels (min and max) per param (rotary slider): 
     juce::Array<LabelPos> labels; 
     
     
@@ -96,7 +97,9 @@ juce::Timer
     // Atomic flag for updating response curve GUI:
     juce::Atomic<bool> parametersChanged { false };
     
-    MonoChain monoChain; 
+    MonoChain monoChain;
+    
+    void updateChain(); 
 };
 
 //==============================================================================
@@ -143,11 +146,7 @@ private:
                lowCutSlopeSliderAttachment,
                highCutSlopeSliderAttachment;
     
-    // Initialise param min/max labels:
-    peakFreqSlider.labels.add({0.f, "20 Hz"})
-    peakFreqSlider.labels.add({1.f, "20 KHz"})
-                
-   
+    
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
     std::vector<juce::Component*> getComps();
     
