@@ -492,8 +492,9 @@ void ResponseCurveComponent::resized()
         if (gDb > 0)
         {
             str << "+";
-            str << gDb;
         }
+        
+        str << gDb; 
         
         auto textWidth = g.getCurrentFont().getStringWidth(str);
         
@@ -527,7 +528,7 @@ juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
     // Reduce top/bottom and side bounds, for labelling purposes:
     
     bounds.removeFromTop(12);
-    bounds.removeFromBottom(12);
+    bounds.removeFromBottom(2);
     bounds.removeFromLeft(20);
     bounds.removeFromRight(20); 
     
@@ -536,7 +537,7 @@ juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
 
 juce::Rectangle<int> ResponseCurveComponent::getAnalysisArea()
 {
-    auto bounds = getLocalBounds();
+    auto bounds = getRenderArea();
     
     bounds.removeFromTop(4);
     bounds.removeFromBottom(4);
@@ -600,7 +601,7 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
     
 
     // Embiggen the editor window:
-    setSize(680, 400);
+    setSize(480, 500);
 }
 
 
