@@ -247,7 +247,6 @@ void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float new
 void ResponseCurveComponent::timerCallback()
 {
     if(parametersChanged.compareAndSetBool(false, true))
-        
     {
         updateChain();
         
@@ -505,14 +504,25 @@ void ResponseCurveComponent::resized()
         
         g.setColour(gDb == 0.f ? Colour(0u, 172u, 1u): Colours::lightgrey);
         g.drawFittedText(str, r, juce::Justification::centred, 1);
+        
+        
+        // Left side: dB values remapped to [-48, 0] dB relative scale:
+        str.clear();
+        
+        str << (gDb - 24.f);
+        
+        r.setX(1);
+        textWidth = g.getCurrentFont().getStringWidth(str);
+        r.setSize(textWidth, fontHeight);
+        g.setColour(Colours::lightgrey);
+        
+        g.drawFittedText(str, r, juce::Justification::centred, 1);
     }
 }
 
 juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
 {
     auto bounds = getLocalBounds();
-    
-//    bounds.reduce(10, 8); // after using JUCE_LIVE_CONSTANT(5) to explore potential reduction values
     
     // Reduce top/bottom and side bounds, for labelling purposes:
     
