@@ -97,12 +97,14 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     
     auto sliderBounds = getSliderBounds();
     
-    g.setColour(Colours::red);
-    g.drawRect(getLocalBounds());
     
-    // Different outline colour for sliders:
-    g.setColour(Colours::yellow);
-    g.drawRect(sliderBounds);
+// Slider bounding boxes (just for reference): 
+//    g.setColour(Colours::red);
+//    g.drawRect(getLocalBounds());
+//
+//    // Different outline colour for sliders:
+//    g.setColour(Colours::yellow);
+//    g.drawRect(sliderBounds);
     
     // Map slider value to normalised range:
     getLookAndFeel().drawRotarySlider(g,  sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(), jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), startAng, endAng, *this);
@@ -132,8 +134,45 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
 
 juce::String RotarySliderWithLabels::getDisplayString() const
 {
-    return juce::String(getValue()); 
+//    return juce::String(getValue());
     
+    if (auto * choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param))
+        return choiceParam->getCurrentChoiceName();
+    
+    juce::String str;
+    // Whether or not to express freq value as Khz:
+    bool addK = false;
+    
+    if (auto * floatParam = dynamic_cast<juce::AudioParameterFloat*>(param))
+    {
+        float val = getValue();
+        
+        if (val > 999.f)
+        {
+            val /= 1000.f;
+            addK = true;
+        }
+        // 2 decimal places if AddK is true, otherwise the number of places required:
+        str = juce::String(val, (addK ? 2 : 0));
+    }
+    else
+    {
+        jassertfalse; // should not happen, but just in case...
+    }
+    
+    // Does not apply in the case of the Q param:
+    if (suffix.isNotEmpty())
+    {
+        // Add a space:
+        str << " ";
+        
+        if (addK)
+            str << "K";
+        
+        str << suffix;
+    }
+    
+    return str;
 }
 
 // =========================================================================================
