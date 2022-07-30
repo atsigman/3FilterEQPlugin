@@ -48,6 +48,16 @@ struct RotarySliderWithLabels : juce::Slider
         setLookAndFeel(nullptr);
     }
     
+    // Label for displaying min/max values for given param:
+    struct LabelPos
+    {
+        float pos;
+        juce::String label;
+    };
+    
+    juce::Array<LabelPos> labels; 
+    
+    
     void paint(juce::Graphics& g) override; 
     juce::Rectangle<int> getSliderBounds() const;
     int getTextHeight() const {return 14;}
@@ -132,6 +142,10 @@ private:
                highCutFreqSliderAttachment,
                lowCutSlopeSliderAttachment,
                highCutSlopeSliderAttachment;
+    
+    // Initialise param min/max labels:
+    peakFreqSlider.labels.add({0.f, "20 Hz"})
+    peakFreqSlider.labels.add({1.f, "20 KHz"})
                 
    
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
