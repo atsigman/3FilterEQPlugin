@@ -25,37 +25,61 @@ void LookAndFeel::drawRotarySlider(juce::Graphics & g, int x, int y, int width, 
     g.setColour(Colour(255u, 154u, 1u));
     g.drawEllipse(bounds, 1.f);
     
-    auto centre = bounds.getCentre();
-    
-    Path p;
-    
-    Rectangle<float> r;
-    
-    // Set Rectangle left and right 2 pixels offset from x value (on either side):
-    r.setLeft(centre.getX() - 2);
-    r.setRight(centre.getX() + 2);
-    
-    // Set Rectangle top and bottom to top of bounding box and the centre, respectively:
-    r.setTop(bounds.getY());
-    r.setBottom(centre.getY());
-    
-    jassert(rotaryStartAngle < rotaryEndAngle);
-    
-    // Add Rectangle to Path:
-    p.addRectangle(r);
-    
-    // Rotate:
-    
-    // Map normalised pos value to rotary slider range values (in radians):
-    auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
-    
-    
-    // Apply transform to rotate position about centre (x, y) point:
-    p.applyTransform(AffineTransform().rotated(sliderAngRad, centre.getX(), centre.getY()));
-    
-    // Draw:
-    
-    g.fillPath(p);
+    if (auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
+    {
+        auto centre = bounds.getCentre();
+        Path p;
+        
+        Rectangle<float> r;
+        
+        // Set Rectangle left and right 2 pixels offset from x value (on either side):
+        r.setLeft(centre.getX() - 2);
+        r.setRight(centre.getX() + 2);
+        
+        // Set Rectangle top and bottom to top of bounding box and the centre, respectively:
+        r.setTop(bounds.getY());
+        // To avoid text being occluded, offset by text height * some constant:
+        r.setBottom(centre.getY() - rswl->getTextHeight() * 1.5);
+        
+        // Add Rectangle to Path:
+        p.addRoundedRectangle(r, 2.f);
+        
+        jassert(rotaryStartAngle < rotaryEndAngle);
+        
+        // Rotate:
+        
+        // Map normalised pos value to rotary slider range values (in radians):
+        auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+        
+        
+        // Apply transform to rotate position about centre (x, y) point:
+        p.applyTransform(AffineTransform().rotated(sliderAngRad, centre.getX(), centre.getY()));
+        
+        // Draw:
+        
+        g.fillPath(p);
+        
+        // Set text font:
+        
+        g.setFont(rswl->getTextHeight());
+        auto text = rswl->getDisplayString();
+        auto strWidth = g.getCurrentFont().getStringWidth(text);
+        
+        // Set dimensions to somewhat wider/taller than text width and height:
+        r.setSize(strWidth + 4, rswl->getTextHeight() + 2);
+        r.setCentre(bounds.getCentre());
+        
+        
+        // Text box background colour:
+        g.setColour(Colours::black);
+        g.fillRect(r);
+        
+        //Text colour:
+        
+        g.setColour(Colours::white);
+        // 1 line of text:
+        g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
+    }
     
 }
 
@@ -103,7 +127,13 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
     // Vertical coordinate 2 pixels below origin:
     r.setY(2);
     
-    return r; 
+    return r;
+}
+
+juce::String RotarySliderWithLabels::getDisplayString() const
+{
+    return juce::String(getValue()); 
+    
 }
 
 // =========================================================================================
