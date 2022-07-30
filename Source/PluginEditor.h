@@ -91,6 +91,7 @@ juce::Timer
     void timerCallback() override;
     
     void paint(juce::Graphics&) override;
+    void resized() override;
     
     SimpleEQAudioProcessor& audioProcessor;
     
@@ -99,7 +100,16 @@ juce::Timer
     
     MonoChain monoChain;
     
-    void updateChain(); 
+    void updateChain();
+    
+    
+    // response curve grid: 
+    juce::Image background;
+    
+    juce::Rectangle<int> getRenderArea();
+    
+    // Area for actual response curve/grid lines: 
+    juce::Rectangle<int> getAnalysisArea();
 };
 
 //==============================================================================
