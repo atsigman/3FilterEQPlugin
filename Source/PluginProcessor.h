@@ -37,6 +37,8 @@ struct Fifo
         for( auto& buffer : buffers )
         {
             buffer.clear();
+            
+            // Fill buffer with 0s to initialise: 
             buffer.resize(numElements, 0);
         }
     }

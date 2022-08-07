@@ -211,7 +211,9 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 }
 
 // =========================================================================================
-ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p): audioProcessor(p)
+ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p):
+audioProcessor(p),
+leftChannelFifo(&audioProcessor.leftChannelFifo)
 {
     const auto& params = audioProcessor.getParameters();
 
@@ -221,6 +223,18 @@ ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p): audio
         
         param->addListener(this);
     }
+    
+    /*
+       sample rate = 48K
+       For an FFT order of 2048, freq range divided into
+       ca. 23 Hz bins (48000/2048).
+       This results in low resultion for lower frequencies. Raising the no. of bins
+       -> increase in resource (CPU) consumption.
+        */
+    leftChannelFFTDataGenerator.changeOrder(FFTOrder::order2048);
+    
+    // Initialise buffer at new size:
+    monoBuffer.setSize(1, leftChannelFFTDataGenerator.getFFTSize());
     
     // Update MonoChain (at launch/reopening of plugin GUI):
     updateChain();
@@ -246,6 +260,33 @@ void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float new
 
 void ResponseCurveComponent::timerCallback()
 {
+    juce::AudioBuffer<float> tempIncomingBuffer;
+    
+    while (leftChannelFifo->getNumCompleteBuffersAvailable() > 0)
+    {
+        if (leftChannelFifo->getAudioBuffer(tempIncomingBuffer))
+        {
+            auto size  = tempIncomingBuffer.getNumSamples();
+            
+            // shift all content of increment num_samples - size to the 0 index:
+            juce::FloatVectorOperations::copy(monoBuffer.getWritePointer(0, 0),
+                                              monoBuffer.getReadPointer(0, size),
+                                              monoBuffer.getNumSamples() - size);
+            
+            // copy most recent block from tempIncomingBuffer to end of monoBuffer;
+            // position in buffer depends upon size of tempIncomingBuffer:
+            juce::FloatVectorOperations::copy(monoBuffer.getWritePointer(0, monoBuffer.getNumSamples() - size),
+                                              tempIncomingBuffer.getReadPointer(0, 0),
+                                              size);
+            
+            leftChannelFFTDataGenerator.produceFFTDataForRendering(monoBuffer, -48.f);
+        }
+        
+        
+        
+        
+    }
+    
     if(parametersChanged.compareAndSetBool(false, true))
     {
         updateChain();
@@ -494,7 +535,7 @@ void ResponseCurveComponent::resized()
             str << "+";
         }
         
-        str << gDb; 
+        str << gDb;
         
         auto textWidth = g.getCurrentFont().getStringWidth(str);
         
