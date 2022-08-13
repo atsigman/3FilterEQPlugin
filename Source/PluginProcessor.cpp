@@ -112,6 +112,13 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     
     leftChannelFifo.prepare(samplesPerBlock);
     rightChannelFifo.prepare(samplesPerBlock);
+    
+    // Lambda function: takes a value, returns the sin (in radians):
+//    osc.initialise([](float x) {return std::sin(x);});
+//
+//    spec.numChannels = getTotalNumOutputChannels();
+//    osc.prepare(spec);
+//    osc.setFrequency(50);
 }
 
 
@@ -166,10 +173,15 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     // copied from prepareToPlay() for testing purposes:
     
     updateFilters();
+    
+    juce::dsp::AudioBlock<float> block(buffer);
 
-    
-    juce::dsp::AudioBlock<float>block(buffer);
-    
+// Test sine, for FFT spectrum analyser testing purposes:
+//    buffer.clear();
+//
+//    juce::dsp::ProcessContextReplacing<float> stereoContext(block);
+//    osc.process(stereoContext);
+//
     auto leftBlock = block.getSingleChannelBlock(0);
     auto rightBlock = block.getSingleChannelBlock(1);
     
@@ -182,7 +194,6 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     leftChannelFifo.update(buffer);
     rightChannelFifo.update(buffer);
     
-
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...

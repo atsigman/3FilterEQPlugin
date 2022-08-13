@@ -213,7 +213,8 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 // =========================================================================================
 ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p):
 audioProcessor(p),
-leftChannelFifo(&audioProcessor.leftChannelFifo)
+leftPathProducer(audioProcessor.leftChannelFifo),
+rightPathProducer(audioProcessor.rightChannelFifo)
 {
     const auto& params = audioProcessor.getParameters();
 
@@ -224,18 +225,7 @@ leftChannelFifo(&audioProcessor.leftChannelFifo)
         param->addListener(this);
     }
     
-    /*
-       sample rate = 48K
-       For an FFT order of 2048, freq range divided into
-       ca. 23 Hz bins (48000/2048).
-       This results in low resultion for lower frequencies. Raising the no. of bins
-       -> increase in resource (CPU) consumption.
-        */
-    leftChannelFFTDataGenerator.changeOrder(FFTOrder::order2048);
-    
-    // Initialise buffer at new size:
-    monoBuffer.setSize(1, leftChannelFFTDataGenerator.getFFTSize());
-    
+   
     // Update MonoChain (at launch/reopening of plugin GUI):
     updateChain();
     
@@ -258,7 +248,7 @@ void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float new
     parametersChanged.set(true);
 }
 
-void ResponseCurveComponent::timerCallback()
+void PathProducer::process(juce::Rectangle<float> fftBounds, double sampleRate)
 {
     juce::AudioBuffer<float> tempIncomingBuffer;
     
@@ -289,12 +279,10 @@ void ResponseCurveComponent::timerCallback()
      and if a buffer can be pulled,
      generate a path via pathProducer.
      */
-    
-    const auto fftBounds = getAnalysisArea().toFloat();
     const auto fftSize = leftChannelFFTDataGenerator.getFFTSize();
     
     // bin width = 48000 / 2048 = 23 Hz
-    const auto binWidth = audioProcessor.getSampleRate() / (double)fftSize;
+    const auto binWidth = sampleRate / (double)fftSize;
     
     while (leftChannelFFTDataGenerator.getNumAvailableFFTDataBlocks() > 0)
     {
@@ -312,8 +300,17 @@ void ResponseCurveComponent::timerCallback()
     
     while (pathProducer.getNumPathsAvailable())
     {
-        pathProducer.getPath(leftChannelFFTPath); 
+        pathProducer.getPath(leftChannelFFTPath);
     }
+}
+
+void ResponseCurveComponent::timerCallback()
+{
+    auto fftBounds = getAnalysisArea().toFloat();
+    auto sampleRate = audioProcessor.getSampleRate();
+    
+    leftPathProducer.process(fftBounds, sampleRate);
+    rightPathProducer.process(fftBounds, sampleRate);
     
     if(parametersChanged.compareAndSetBool(false, true))
     {
@@ -449,13 +446,24 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
         responseCurve.lineTo(responseArea.getX() + i , map(mags[i]));
     }
     
-    // Translate FFT spectrum analyser function to response area origin:
-    leftChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f)); 
     
-    // Paint FFT analysis path: 
-    g.setColour(Colours::pink);
+    auto leftChannelFFTPath = leftPathProducer.getPath();
+    
+    // Translate FFT spectrum analyser function to response area origin:
+    leftChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f));
+    
+    // Paint FFT analysis path for left channel:
+    g.setColour(Colours::skyblue);
     g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
-        
+    
+    auto rightChannelFFTPath = rightPathProducer.getPath();
+    rightChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f));
+    
+    // Paint FFT analysis path for right channel:
+    g.setColour(Colours::darkcyan);
+    g.strokePath(rightChannelFFTPath, PathStrokeType(1.f));
+    
+
     g.setColour(Colours::orange);
     g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
         

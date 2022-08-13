@@ -214,6 +214,39 @@ private:
 
 };
 
+struct PathProducer
+{
+    PathProducer(SingleChannelSampleFifo<SimpleEQAudioProcessor::BlockType>& scsf):
+    leftChannelFifo(&scsf)
+    {
+        /*
+           sample rate = 48K
+           For an FFT order of 2048, freq range divided into
+           ca. 23 Hz bins (48000/2048).
+           This results in low resultion for lower frequencies. Raising the no. of bins
+           -> increase in resource (CPU) consumption.
+            */
+        leftChannelFFTDataGenerator.changeOrder(FFTOrder::order2048);
+        
+        // Initialise buffer at new size:
+        monoBuffer.setSize(1, leftChannelFFTDataGenerator.getFFTSize());
+    }
+    
+    void process(juce::Rectangle<float> fftBounds, double sampleRate);
+    juce::Path getPath() {return leftChannelFFTPath;}; 
+    
+private:
+    SingleChannelSampleFifo<SimpleEQAudioProcessor::BlockType>* leftChannelFifo;
+    
+    juce::AudioBuffer<float> monoBuffer;
+    
+    FFTDataGenerator<std::vector<float>> leftChannelFFTDataGenerator;
+    
+    AnalyzerPathGenerator<juce::Path> pathProducer;
+    
+    juce::Path leftChannelFFTPath;
+};
+
 // Response curve as separate component (to avoid exceeding editor boundaries):
 struct ResponseCurveComponent: juce::Component,
 juce::AudioProcessorParameter::Listener,
@@ -250,15 +283,8 @@ juce::Timer
     // Area for actual response curve/grid lines: 
     juce::Rectangle<int> getAnalysisArea();
     
-    SingleChannelSampleFifo<SimpleEQAudioProcessor::BlockType>* leftChannelFifo;
+    PathProducer leftPathProducer, rightPathProducer; 
     
-    juce::AudioBuffer<float> monoBuffer;
-    
-    FFTDataGenerator<std::vector<float>> leftChannelFFTDataGenerator;
-    
-    AnalyzerPathGenerator<juce::Path> pathProducer;
-    
-    juce::Path leftChannelFFTPath;
 };
 
 //==============================================================================
