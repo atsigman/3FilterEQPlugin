@@ -282,9 +282,37 @@ void ResponseCurveComponent::timerCallback()
             leftChannelFFTDataGenerator.produceFFTDataForRendering(monoBuffer, -48.f);
         }
         
-        
-        
-        
+    }
+    
+    /*
+     If there are FFT data buffers to pull,
+     and if a buffer can be pulled,
+     generate a path via pathProducer.
+     */
+    
+    const auto fftBounds = getAnalysisArea().toFloat();
+    const auto fftSize = leftChannelFFTDataGenerator.getFFTSize();
+    
+    // bin width = 48000 / 2048 = 23 Hz
+    const auto binWidth = audioProcessor.getSampleRate() / (double)fftSize;
+    
+    while (leftChannelFFTDataGenerator.getNumAvailableFFTDataBlocks() > 0)
+    {
+        std::vector<float> fftData;
+        if (leftChannelFFTDataGenerator.getFFTData(fftData))
+        {
+            pathProducer.generatePath(fftData, fftBounds, fftSize, binWidth, -48.f);
+        }
+    }
+    
+    /* While there are paths that can be pulled,
+       pull as many as possible;
+       display most recent path.
+     */
+    
+    while (pathProducer.getNumPathsAvailable())
+    {
+        pathProducer.getPath(leftChannelFFTPath); 
     }
     
     if(parametersChanged.compareAndSetBool(false, true))
@@ -292,8 +320,10 @@ void ResponseCurveComponent::timerCallback()
         updateChain();
         
         // Signal a repaint (draw new response curve)
-        repaint();
+//        repaint();
     }
+    // Pepaint all the time, as paths are being produced continuously:
+    repaint();
 }
 
 // To ensure that current parameters are displayed in response curve at plugin launch:
@@ -418,6 +448,10 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     {
         responseCurve.lineTo(responseArea.getX() + i , map(mags[i]));
     }
+    
+    // Paint FFT analysis path: 
+    g.setColour(Colours::blue);
+    g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
         
     g.setColour(Colours::orange);
     g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
