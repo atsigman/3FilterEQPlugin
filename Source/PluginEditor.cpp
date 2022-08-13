@@ -449,8 +449,11 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
         responseCurve.lineTo(responseArea.getX() + i , map(mags[i]));
     }
     
+    // Translate FFT spectrum analyser function to response area origin:
+    leftChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f)); 
+    
     // Paint FFT analysis path: 
-    g.setColour(Colours::blue);
+    g.setColour(Colours::pink);
     g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
         
     g.setColour(Colours::orange);
