@@ -321,7 +321,6 @@ private:
     // declare instance of ResponseCurveComponent:
     ResponseCurveComponent responseCurveComponent;
     
-    
     // Attach sliders to parameters: 
     Attachment peakFreqSliderAttachment,
                peakGainSliderAttachment,
@@ -331,6 +330,16 @@ private:
                lowCutSlopeSliderAttachment,
                highCutSlopeSliderAttachment;
     
+            
+    
+    juce::ToggleButton lowcutBypassButton, highcutBypassButton, peakBypassButton, analyserEnabledButton; 
+    
+    using ButtonAttachment = APVTS::ButtonAttachment;
+    
+    ButtonAttachment lowcutBypassButtonAttachment,
+                     highcutBypassButtonAttachment,
+                     peakBypassButtonAttachment,
+                     analyserEnabledButtonAttachment;
     
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
     std::vector<juce::Component*> getComps();
