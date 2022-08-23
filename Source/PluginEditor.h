@@ -166,6 +166,11 @@ struct LookAndFeel : juce::LookAndFeel_V4
                           float rotaryStartAngle,
                           float rotaryEndAngle,
                          juce::Slider&) override;
+    
+    void drawToggleButton(juce::Graphics &g,
+                          juce::ToggleButton &toggleButton,
+                          bool shouldDrawButtonAsHighlighted,
+                          bool shouldDrawButtonAsDown) override;
 };
 
 // Rotary Slider customisation:
@@ -343,6 +348,9 @@ private:
     
     // Retrieve all sliders as a vector for ease of iteration through all sliders:
     std::vector<juce::Component*> getComps();
+    
+    // LookAndFeel instance: 
+    LookAndFeel lnf;
     
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
