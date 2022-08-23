@@ -87,19 +87,19 @@ void LookAndFeel::drawToggleButton(juce::Graphics &g, juce::ToggleButton &toggle
 {
     using namespace juce;
     
-    // Power button-like design: 
+    // Power button-like design:
     Path powerButton;
     
     auto bounds = toggleButton.getLocalBounds();
     
     // Somewhat reduced size:
-    auto size = jmin(bounds.getWidth(), bounds.getHeight()) - 6;
+    auto size = jmin(bounds.getWidth(), bounds.getHeight()) - 4;
     
     auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
     
     float ang = 30.f;
     
-    size -= 6;
+    size -= 6; 
     
     powerButton.addCentredArc(r.getCentreX(),
                               r.getCentreY(),
