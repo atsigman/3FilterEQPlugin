@@ -271,6 +271,12 @@ juce::Timer
     void paint(juce::Graphics&) override;
     void resized() override;
     
+    void toggleAnalysisEnablement(bool enabled)
+    {
+        shouldShowFFTAnalysis = enabled;
+    }
+    
+private:
     SimpleEQAudioProcessor& audioProcessor;
     
     // Atomic flag for updating response curve GUI:
@@ -288,7 +294,9 @@ juce::Timer
     // Area for actual response curve/grid lines: 
     juce::Rectangle<int> getAnalysisArea();
     
-    PathProducer leftPathProducer, rightPathProducer; 
+    PathProducer leftPathProducer, rightPathProducer;
+    
+    bool shouldShowFFTAnalysis = true;
     
 };
 

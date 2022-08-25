@@ -367,11 +367,15 @@ void PathProducer::process(juce::Rectangle<float> fftBounds, double sampleRate)
 
 void ResponseCurveComponent::timerCallback()
 {
-    auto fftBounds = getAnalysisArea().toFloat();
-    auto sampleRate = audioProcessor.getSampleRate();
+    if (shouldShowFFTAnalysis)
+    {
     
-    leftPathProducer.process(fftBounds, sampleRate);
-    rightPathProducer.process(fftBounds, sampleRate);
+        auto fftBounds = getAnalysisArea().toFloat();
+        auto sampleRate = audioProcessor.getSampleRate();
+    
+        leftPathProducer.process(fftBounds, sampleRate);
+        rightPathProducer.process(fftBounds, sampleRate);
+    }
     
     if(parametersChanged.compareAndSetBool(false, true))
     {
@@ -521,24 +525,26 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
         responseCurve.lineTo(responseArea.getX() + i , map(mags[i]));
     }
     
+    if (shouldShowFFTAnalysis)
+    {
     
-    auto leftChannelFFTPath = leftPathProducer.getPath();
+        auto leftChannelFFTPath = leftPathProducer.getPath();
     
-    // Translate FFT spectrum analyser function to response area origin:
-    leftChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f));
+        // Translate FFT spectrum analyser function to response area origin:
+        leftChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f));
     
-    // Paint FFT analysis path for left channel:
-    g.setColour(Colours::skyblue);
-    g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
+        // Paint FFT analysis path for left channel:
+        g.setColour(Colours::skyblue);
+        g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
     
-    auto rightChannelFFTPath = rightPathProducer.getPath();
-    rightChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f));
+        auto rightChannelFFTPath = rightPathProducer.getPath();
+        rightChannelFFTPath.applyTransform(AffineTransform().translation(responseArea.getX(), responseArea.getY() - 10.f));
     
-    // Paint FFT analysis path for right channel:
-    g.setColour(Colours::darkcyan);
-    g.strokePath(rightChannelFFTPath, PathStrokeType(1.f));
+        // Paint FFT analysis path for right channel:
+        g.setColour(Colours::darkcyan);
+        g.strokePath(rightChannelFFTPath, PathStrokeType(1.f));
+    }
     
-
     g.setColour(Colours::orange);
     g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
         
@@ -772,6 +778,7 @@ analyserEnabledButtonAttachment(audioProcessor.apvts, "Analyser Enabled", analys
     
     // Enable/disable sliders based upon bypass state:
     
+    // Necessary for asynchronous components/actions:
     auto safePtr = juce::Component::SafePointer<SimpleEQAudioProcessorEditor>(this);
     
     peakBypassButton.onClick = [safePtr]()
@@ -806,6 +813,16 @@ analyserEnabledButtonAttachment(audioProcessor.apvts, "Analyser Enabled", analys
           comp->highCutFreqSlider.setEnabled(!bypassed);
           comp->highCutSlopeSlider.setEnabled(!bypassed);
       }
+    };
+        
+    analyserEnabledButton.onClick = [safePtr]()
+    {
+        if (auto* comp = safePtr.getComponent())
+        {
+            auto enabled = comp->analyserEnabledButton.getToggleState();
+            
+            comp->responseCurveComponent.toggleAnalysisEnablement(enabled);
+        }
     };
     
     // Embiggen the editor window:
