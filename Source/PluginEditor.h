@@ -293,6 +293,9 @@ juce::Timer
 };
 
 //==============================================================================
+struct PowerButton : juce::ToggleButton {};
+struct AnalyserButton : juce::ToggleButton {};
+
 /**
 */
 class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor
@@ -337,7 +340,8 @@ private:
     
             
     
-    juce::ToggleButton lowcutBypassButton, highcutBypassButton, peakBypassButton, analyserEnabledButton; 
+    PowerButton lowcutBypassButton, highcutBypassButton, peakBypassButton;
+    AnalyserButton analyserEnabledButton; 
     
     using ButtonAttachment = APVTS::ButtonAttachment;
     

@@ -90,53 +90,80 @@ void LookAndFeel::drawToggleButton(juce::Graphics &g, juce::ToggleButton &toggle
     // Power button-like design:
     Path powerButton;
     
-    auto bounds = toggleButton.getLocalBounds();
+    if (auto* pb = dynamic_cast<PowerButton*>(&toggleButton))
+    {
+        auto bounds = toggleButton.getLocalBounds();
     
-    // Somewhat reduced size:
-    auto size = jmin(bounds.getWidth(), bounds.getHeight()) - 4;
+        // Somewhat reduced size:
+        auto size = jmin(bounds.getWidth(), bounds.getHeight()) - 4;
     
-    auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
+        auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
     
-    float ang = 30.f;
+        float ang = 30.f;
     
-    size -= 6; 
+        size -= 6;
     
-    powerButton.addCentredArc(r.getCentreX(),
-                              r.getCentreY(),
-                              size * 0.5,
-                              size * 0.5,
-                              0.f,
-                              degreesToRadians(ang),
-                              degreesToRadians(360.f - ang),
-                              true);
-    
-    
-    // Vertical line:
-    
-    powerButton.startNewSubPath(r.getCentreX(), r.getY());
-    powerButton.lineTo(r.getCentre());
-    
-    // Customise joint style to rounded edges:
-    PathStrokeType pst(2.f, PathStrokeType::JointStyle::curved);
-    
-    auto colour = toggleButton.getToggleState() ? Colours::dimgrey : Colour(0u, 172u, 1u);
-    g.setColour(colour);
-    g.strokePath(powerButton, pst);
-    
-    // Draw ellipse around button:
-    g.drawEllipse(r, 2);
+        powerButton.addCentredArc(r.getCentreX(),
+                                  r.getCentreY(),
+                                  size * 0.5,
+                                  size * 0.5,
+                                  0.f,
+                                  degreesToRadians(ang),
+                                  degreesToRadians(360.f - ang),
+                                  true);
     
     
+        // Vertical line:
     
+        powerButton.startNewSubPath(r.getCentreX(), r.getY());
+        powerButton.lineTo(r.getCentre());
     
+        // Customise joint style to rounded edges:
+        PathStrokeType pst(2.f, PathStrokeType::JointStyle::curved);
     
+        auto colour = toggleButton.getToggleState() ? Colours::dimgrey : Colour(0u, 172u, 1u);
+        g.setColour(colour);
+        g.strokePath(powerButton, pst);
     
+        // Draw ellipse around button:
+        g.drawEllipse(r, 2);
+    }
     
-    
-    
-    
+    else if (auto* ab = dynamic_cast<AnalyserButton*>(&toggleButton))
+    {
+        // If *disabled*, grey, otherwise green:
+        auto colour = ! toggleButton.getToggleState() ? Colours::dimgrey : Colour(0u, 172u, 1u);
+        g.setColour(colour);
+        
+        auto bounds = toggleButton.getLocalBounds();
+        g.drawRect(bounds);
+        
+        auto insetRect = bounds.reduced(4);
+        
+        
+        // Random path inside bounding rectangle:
+        Path randomPath;
+        
+        Random r;
+        
+        auto y = insetRect.getY();
+        auto height = insetRect.getHeight();
+        
+        // Random height between 0 and 1:
+        randomPath.startNewSubPath(insetRect.getX(), y + height * r.nextFloat());
+        
+        // lineTo: random line seg every other pixel:
+        
+        for (auto x = insetRect.getX() + 1; x < insetRect.getRight(); x += 2)
+        {
+            randomPath.lineTo(x, y + height * r.nextFloat());
+        }
+        
+        g.strokePath(randomPath, PathStrokeType(1.f));
+    }
+        
 }
-
+    
 void RotarySliderWithLabels::paint(juce::Graphics &g)
 {
     using namespace juce;
@@ -761,7 +788,7 @@ analyserEnabledButtonAttachment(audioProcessor.apvts, "Analyser Enabled", analys
     lowcutBypassButton.setLookAndFeel(&lnf);
     highcutBypassButton.setLookAndFeel(&lnf);
     peakBypassButton.setLookAndFeel(&lnf);
-    
+    analyserEnabledButton.setLookAndFeel(&lnf);
 
     // Embiggen the editor window:
     setSize(480, 500);
@@ -774,6 +801,7 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
     lowcutBypassButton.setLookAndFeel(nullptr);
     highcutBypassButton.setLookAndFeel(nullptr);
     peakBypassButton.setLookAndFeel(nullptr);
+    analyserEnabledButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -800,6 +828,17 @@ void SimpleEQAudioProcessorEditor::resized()
     
     auto bounds = getLocalBounds();
     
+    // 25 pixels down from the top:
+    auto analyserEnabledArea = bounds.removeFromTop(25);
+    
+    analyserEnabledArea.setWidth(100);
+
+    analyserEnabledArea.setX(5);
+    analyserEnabledArea.removeFromTop(2);
+    
+    analyserEnabledButton.setBounds(analyserEnabledArea);
+    
+    bounds.removeFromTop(5);
     
     // Response area = Some height ratio down from top (the rectangle in which the response curve will be situated):
     float hRatio = 25.f / 100.f;
