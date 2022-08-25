@@ -294,7 +294,33 @@ juce::Timer
 
 //==============================================================================
 struct PowerButton : juce::ToggleButton {};
-struct AnalyserButton : juce::ToggleButton {};
+struct AnalyserButton : juce::ToggleButton
+{
+    void resized() override
+    {
+        auto bounds = getLocalBounds();
+        auto insetRect = bounds.reduced(4);
+        
+        randomPath.clear();
+        
+        juce::Random r;
+        
+        auto y = insetRect.getY();
+        auto height = insetRect.getHeight();
+        
+        // Random height between 0 and 1:
+        randomPath.startNewSubPath(insetRect.getX(), y + height * r.nextFloat());
+        
+        // lineTo: random line seg every other pixel:
+        
+        for (auto x = insetRect.getX() + 1; x < insetRect.getRight(); x += 2)
+        {
+            randomPath.lineTo(x, y + height * r.nextFloat());
+        }
+    }
+    
+    juce::Path randomPath;    
+};
 
 /**
 */

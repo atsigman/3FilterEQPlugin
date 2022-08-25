@@ -129,7 +129,7 @@ void LookAndFeel::drawToggleButton(juce::Graphics &g, juce::ToggleButton &toggle
         g.drawEllipse(r, 2);
     }
     
-    else if (auto* ab = dynamic_cast<AnalyserButton*>(&toggleButton))
+    else if (auto* analyserButton = dynamic_cast<AnalyserButton*>(&toggleButton))
     {
         // If *disabled*, grey, otherwise green:
         auto colour = ! toggleButton.getToggleState() ? Colours::dimgrey : Colour(0u, 172u, 1u);
@@ -138,30 +138,8 @@ void LookAndFeel::drawToggleButton(juce::Graphics &g, juce::ToggleButton &toggle
         auto bounds = toggleButton.getLocalBounds();
         g.drawRect(bounds);
         
-        auto insetRect = bounds.reduced(4);
-        
-        
-        // Random path inside bounding rectangle:
-        Path randomPath;
-        
-        Random r;
-        
-        auto y = insetRect.getY();
-        auto height = insetRect.getHeight();
-        
-        // Random height between 0 and 1:
-        randomPath.startNewSubPath(insetRect.getX(), y + height * r.nextFloat());
-        
-        // lineTo: random line seg every other pixel:
-        
-        for (auto x = insetRect.getX() + 1; x < insetRect.getRight(); x += 2)
-        {
-            randomPath.lineTo(x, y + height * r.nextFloat());
-        }
-        
-        g.strokePath(randomPath, PathStrokeType(1.f));
+        g.strokePath(analyserButton->randomPath, PathStrokeType(1.f));
     }
-        
 }
     
 void RotarySliderWithLabels::paint(juce::Graphics &g)
