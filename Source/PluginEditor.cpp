@@ -15,14 +15,16 @@ void LookAndFeel::drawRotarySlider(juce::Graphics & g, int x, int y, int width, 
     
     auto bounds = Rectangle<float>(x, y, width, height);
     
+    auto enabled = slider.isEnabled();
+
     // Create circles:
     
-    // Fill colour:
-    g.setColour(Colour(97u, 18u, 167u));
+    // Fill colour (if enabled):
+    g.setColour(enabled ? Colour(97u, 18u, 167u) : Colours::darkgrey);
     g.fillEllipse(bounds);
     
-    // Outline colour:
-    g.setColour(Colour(255u, 154u, 1u));
+    // Outline colour (if enabled):
+    g.setColour(enabled ? Colour(255u, 154u, 1u): Colours::grey);
     g.drawEllipse(bounds, 1.f);
     
     if (auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
@@ -767,7 +769,45 @@ analyserEnabledButtonAttachment(audioProcessor.apvts, "Analyser Enabled", analys
     highcutBypassButton.setLookAndFeel(&lnf);
     peakBypassButton.setLookAndFeel(&lnf);
     analyserEnabledButton.setLookAndFeel(&lnf);
-
+    
+    // Enable/disable sliders based upon bypass state:
+    
+    auto safePtr = juce::Component::SafePointer<SimpleEQAudioProcessorEditor>(this);
+    
+    peakBypassButton.onClick = [safePtr]()
+    {
+      if (auto* comp = safePtr.getComponent())
+      {
+          auto bypassed = comp->peakBypassButton.getToggleState();
+          // slider should be enabled if NOT bypassed:
+          comp->peakFreqSlider.setEnabled(!bypassed);
+          comp->peakGainSlider.setEnabled(!bypassed);
+          comp->peakQualitySlider.setEnabled(!bypassed);
+      }
+    };
+    
+    lowcutBypassButton.onClick = [safePtr]()
+    {
+      if (auto* comp = safePtr.getComponent())
+      {
+          auto bypassed = comp->lowcutBypassButton.getToggleState();
+          // slider should be enabled if NOT bypassed:
+          comp->lowCutFreqSlider.setEnabled(!bypassed);
+          comp->lowCutSlopeSlider.setEnabled(!bypassed);
+      }
+    };
+    
+    highcutBypassButton.onClick = [safePtr]()
+    {
+      if (auto* comp = safePtr.getComponent())
+      {
+          auto bypassed = comp->highcutBypassButton.getToggleState();
+          // slider should be enabled if NOT bypassed:
+          comp->highCutFreqSlider.setEnabled(!bypassed);
+          comp->highCutSlopeSlider.setEnabled(!bypassed);
+      }
+    };
+    
     // Embiggen the editor window:
     setSize(480, 500);
 }
