@@ -72,13 +72,12 @@ void LookAndFeel::drawRotarySlider(juce::Graphics & g, int x, int y, int width, 
         r.setCentre(bounds.getCentre());
         
         
-        // Text box background colour:
-        g.setColour(Colours::black);
+        // Text box background colour (if slider enabled):
+        g.setColour(enabled ? Colours::black : Colours::darkgrey);
         g.fillRect(r);
         
-        //Text colour:
-        
-        g.setColour(Colours::white);
+        //Text colour (if slider enabled):
+        g.setColour(enabled ? Colours::white : Colours::lightgrey);
         // 1 line of text:
         g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
     }
